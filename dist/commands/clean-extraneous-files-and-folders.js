@@ -2,8 +2,20 @@ import { logVerboseError } from '#lib/logVerbose';
 import { opendir, rm } from 'fs/promises';
 import { basename, join, sep } from 'path';
 import { fileURLToPath } from 'url';
-import { scan } from './clean-extraneous-types';
 import fs from 'fs';
+export async function* scan(path, cb) {
+    const dir = await opendir(typeof path === 'string' ? path : fileURLToPath(path));
+    for await (const item of dir) {
+        const file = join(dir.path, item.name);
+        if (item.isFile()) {
+            if (cb(file))
+                yield file;
+        }
+        else if (item.isDirectory()) {
+            yield* scan(file, cb);
+        }
+    }
+}
 async function* scanDir(path) {
     const dir = await opendir(typeof path === 'string' ? path : fileURLToPath(path));
     for await (const item of dir) {
@@ -15,7 +27,7 @@ async function* scanDir(path) {
 }
 export async function cleanExtraneousFilesAndFolders(options) {
     try {
-        const regexp_file = /(?:\.d\.ts(?:\.map)?|\.tsbuildinfo)$/;
+        const regexp_file = /(?:.js)$/;
         const cb_file = (path) => regexp_file.test(path);
         for await (const path of scan(options.dist, cb_file)) {
             if (!path.endsWith(`${basename(fileURLToPath(options.dist))}${sep}index.js`)) {
