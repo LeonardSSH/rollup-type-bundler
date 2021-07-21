@@ -4,6 +4,7 @@ import { buildCode } from '#commands/build-code';
 import { bundleTypes } from '#commands/bundle-types';
 import { cleanDist } from '#commands/clean-dist';
 import { cleanExtraneousTypes } from '#commands/clean-extraneous-types';
+import { cleanExtraneousFilesAndFolders } from '#commands/clean-extraneous-files-and-folders';
 import { cliRootDir, indent, packageCwd } from '#lib/constants';
 import { logVerboseError, logVerboseInfo } from '#lib/logVerbose';
 import { parseOptionsFile } from '#lib/optionsParser';
@@ -89,3 +90,10 @@ await doActionAndLog('Bundling TypeScript types', bundleTypes(options));
 |-------------------------------------------------|
 */
 await doActionAndLog('Cleaning extraneous types from the "dist" path', cleanExtraneousTypes(options));
+
+/**
+|-----------------------------------------------------------|
+| Cleans extraneous files & folders from the dist directory |
+|-----------------------------------------------------------|
+*/
+await doActionAndLog('Cleaning extraneous files & folders from the "dist" path', cleanExtraneousFilesAndFolders(options));

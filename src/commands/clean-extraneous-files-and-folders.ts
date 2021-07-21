@@ -3,12 +3,8 @@ import { logVerboseError } from '#lib/logVerbose';
 import { opendir, rm } from 'fs/promises';
 import { basename, join, sep } from 'path';
 import { fileURLToPath, URL } from 'url';
+import fs from 'fs';
 
-/**
- * Scans a given {@link path} applying the {@link cb} filter
- * @param path The path to scan
- * @param cb The callback to apply to filter files in the {@link path}
- */
 export async function* scan(path: URL | string, cb: (path: string) => boolean): AsyncGenerator<string> {
   const dir = await opendir(typeof path === 'string' ? path : fileURLToPath(path));
 
@@ -22,23 +18,34 @@ export async function* scan(path: URL | string, cb: (path: string) => boolean): 
   }
 }
 
-/**
- * Cleans up the extraneous types from the `dist` folder after bundling all the types into the root `index.d.ts`
- * @param options The options that tell this function where to clean up
- */
-export async function cleanExtraneousTypes(options: Options): Promise<void> {
-  try {
-    const regexp = /(?:\.d\.ts(?:\.map)?|\.tsbuildinfo)$/;
-    const cb = (path: string) => regexp.test(path);
+async function* scanDir(path: URL | string): AsyncGenerator<string> {
+  const dir = await opendir(typeof path === 'string' ? path : fileURLToPath(path));
 
-    for await (const path of scan(options.dist, cb)) {
-      if (!path.endsWith(`${basename(fileURLToPath(options.dist))}${sep}index.d.ts`)) {
+  for await (const item of dir) {
+    const directory = join(dir.path, item.name);
+    if (item.isDirectory()) {
+      yield directory;
+    }
+  }
+}
+
+export async function cleanExtraneousFilesAndFolders(options: Options): Promise<void> {
+  try {
+    const regexp_file = /(?:.js)$/;
+    const cb_file = (path: string) => regexp_file.test(path);
+
+    for await (const path of scan(options.dist, cb_file)) {
+      if (!path.endsWith(`${basename(fileURLToPath(options.dist))}${sep}index.js`)) {
         await rm(path);
       }
     }
+
+    for await (const dir of scanDir(options.dist)) {
+      fs.rmdirSync(dir);
+    }
   } catch (err) {
     logVerboseError({
-      text: ['An error occurred while removing one or more of the extraneous types from the `dist` directory.', 'Please remove them manually'],
+      text: ['An error occurred while removing one or more of the useless files & folders from the `dist` directory.', 'Please remove them manually'],
       verbose: options.verbose,
       verboseText: ['I was scanning this dist path: ', options.dist.toString(), 'Furthermore, the exact error that occurred is: ', err],
       logWithThrownError: true

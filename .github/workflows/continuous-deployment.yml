@@ -30,30 +30,32 @@ jobs:
       - name: Install Dependencies if Cache Miss
         if: ${{ !steps.cache-restore.outputs.cache-hit }}
         run: yarn --frozen-lockfile
-      - name: Bump Version & Publish
-        run: |
-          TAG=$([[ ${{ github.event_name }} == 'push' ]] && echo 'next' || echo 'pr-${{ github.event.inputs.prNumber }}')
+      - name: Build Code
+        run: yarn build
+      # - name: Push new code
+      #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      #   run: |
+      #     REPO="https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-          # Bump the version
-          yarn standard-version --skip.commit --skip.tag --prerelease "${TAG}.$(git rev-parse --verify --short HEAD)"
+      #     echo -e "\n# Checkout the repo in the target branch"
+      #     TARGET_BRANCH="build"
+      #     git clone $REPO out -b $TARGET_BRANCH
 
-          # Publish to NPM
-          npm publish --tag ${TAG} || true
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Use Node.js v16 with GitHub Package Registry
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16
-          registry-url: https://npm.pkg.github.com
-      - name: Bump Version & Publish
-        run: |
-          TAG=$([[ ${{ github.event_name }} == 'push' ]] && echo 'next' || echo 'pr-${{ github.event.inputs.prNumber }}')
+      #     echo -e "\n# Remove any old files in the dist folder"
+      #     rm -rfv out/dist/*
 
-          # Bump the version
-          yarn standard-version --skip.commit --skip.tag --prerelease "${TAG}.$(git rev-parse --verify --short HEAD)"
+      #     echo -e "\n# Move the generated code to the newly-checked-out repo, to be committed and pushed"
+      #     rsync -vaI package.json out/
+      #     rsync -vaI README.md out/
+      #     rsync -vaI LICENSE.md out/
+      #     rsync -vaI dist/ out/dist
 
-          # Publish to GitHub
-          npm publish --tag ${TAG} || true
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     echo -e "\n# Commit and push"
+      #     cd out
+      #     git add --all .
+      #     git config user.name "${GITHUB_ACTOR}"
+      #     git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+      #     git commit -m "build: tsc build for ${GITHUB_SHA}" || true
+      #     git push origin $TARGET_BRANCH
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.COMMIT_TOKEN }}
