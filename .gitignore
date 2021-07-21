@@ -28,6 +28,3 @@ coverage/
 .idea/
 .vs/
 *.iml
-
-# Generated files
-dist/
