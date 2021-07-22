@@ -41,7 +41,7 @@ export async function cleanExtraneousFilesAndFolders(options: Options): Promise<
     }
 
     for await (const dir of scanDir(options.dist)) {
-      fs.rmdirSync(dir);
+      await rm(dir, { recursive: true });
     }
   } catch (err) {
     logVerboseError({
