@@ -2,7 +2,6 @@ import { logVerboseError } from '#lib/logVerbose';
 import { opendir, rm } from 'fs/promises';
 import { basename, join, sep } from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
 export async function* scan(path, cb) {
     const dir = await opendir(typeof path === 'string' ? path : fileURLToPath(path));
     for await (const item of dir) {
@@ -35,7 +34,7 @@ export async function cleanExtraneousFilesAndFolders(options) {
             }
         }
         for await (const dir of scanDir(options.dist)) {
-            fs.rmdirSync(dir);
+            await rm(dir, { recursive: true });
         }
     }
     catch (err) {
