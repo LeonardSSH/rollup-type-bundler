@@ -3,7 +3,6 @@ import { logVerboseError } from '#lib/logVerbose';
 import { opendir, rm } from 'fs/promises';
 import { basename, join, sep } from 'path';
 import { fileURLToPath, URL } from 'url';
-import fs from 'fs';
 
 export async function* scan(path: URL | string, cb: (path: string) => boolean): AsyncGenerator<string> {
   const dir = await opendir(typeof path === 'string' ? path : fileURLToPath(path));
